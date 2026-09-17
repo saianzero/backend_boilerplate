@@ -1,0 +1,10 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501", "B008", "B904", "UP046", "UP047"]  # B008: Depends() default is the FastAPI idiom
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
