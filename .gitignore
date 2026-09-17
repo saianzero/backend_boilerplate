@@ -52,3 +52,6 @@ htmlcov/
 src/.DS_Store
 
 *.rdb
+
+# Keep the documented template while ignoring real env files
+!.env.example
