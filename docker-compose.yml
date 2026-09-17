@@ -1,0 +1,76 @@
+# Local dev stack: API + worker + Mongo + Redis + NATS.
+#   make start   -> docker compose up --build
+# In production point DATABASE_URI / REDIS_CACHE_URL / NATS_SERVER_HOST at
+# managed services and drop the infra containers.
+
+x-app-base: &app-base
+  build:
+    context: .
+    dockerfile: Dockerfile.main
+  image: backend_service:latest
+  env_file:
+    - .env
+  environment:
+    - DATABASE_URI=mongodb://mongo:27017
+    - REDIS_CACHE_URL=redis://redis:6379/0
+    - NATS_SERVER_HOST=nats:4222
+  depends_on:
+    - mongo
+    - redis
+    - nats
+  restart: unless-stopped
+  networks:
+    - backend_net
+
+services:
+  api:
+    <<: *app-base
+    container_name: backend_api
+    ports:
+      - "8011:8011"
+    command: uvicorn main:app --host 0.0.0.0 --port 8011
+
+  items_worker:
+    <<: *app-base
+    container_name: backend_items_worker
+    command: >
+      taskiq worker --workers 2 --max-async-tasks 50 --ack-type when_received
+      src.taskiq_brokers:items_broker src.items.tasks
+
+  mongo:
+    image: mongo:7
+    container_name: backend_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - backend_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: backend_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - backend_net
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: backend_nats
+    command: ["-js", "-m", "8222"]   # enable JetStream + monitoring
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - nats_data:/data
+    networks:
+      - backend_net
+
+volumes:
+  mongo_data:
+  nats_data:
+
+networks:
+  backend_net:
+    name: backend_net
