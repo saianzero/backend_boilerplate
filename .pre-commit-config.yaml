@@ -1,0 +1,73 @@
+# ==========================================================
+# Pre-commit Configuration
+# Modern Python 3.12 + Ruff Setup
+# ==========================================================
+# Setup Instructions:
+# pip install pre-commit
+# pre-commit install
+# ==========================================================
+
+default_language_version:
+  python: python3.12
+
+repos:
+  # -------------------- Basic Hygiene --------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=2000]
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  # -------------------- Ruff (Lint + Format) --------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.13.3
+    hooks:
+      # Unified code quality check (replaces black/isort/flake8)
+      - id: ruff
+        args: [--fix]   # auto-fix lint issues on commit
+      - id: ruff-format # ruff’s built-in formatter (like black)
+
+  # -------------------- Typing (Optional but Useful) --------------------
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.18.2
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-requests
+          - types-redis
+          - types-PyYAML
+          - types-python-dateutil
+
+  # -------------------- Security --------------------
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+        args: ["-ll", "-x", "tests"]
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+
+  # -------------------- Shell / Manifest --------------------
+  - repo: https://github.com/mgedmin/check-manifest
+    rev: "0.50"
+    hooks:
+      - id: check-manifest
+        stages: [manual]
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+        args: ["-x", "--severity=style"]

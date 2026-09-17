@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+
+# Logs
+*.log
+logs/
+*.out
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build
+build/
+dist/
+*.manifest
+
+# Coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+
+# FastAPI / Uvicorn
+*.sqlite3
+*.db
+
+# Envs
+.env
+.env.*
+
+
+.DS_Store
+src/.DS_Store
+
+*.rdb
