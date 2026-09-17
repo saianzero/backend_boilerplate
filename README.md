@@ -1,11 +1,48 @@
-# Backend Boilerplate (FastAPI + Beanie + Taskiq)
+<div align="center">
 
-Production-shaped starting point for async Python services. Copy it, rename
-the `items` module, and build.
+# Backend Boilerplate
 
-**Stack**: FastAPI · MongoDB via Beanie ODM · Redis · Taskiq workers on NATS
-JetStream · dependency-injector · OpenTelemetry · S3 · SMTP · LLM fallback
-chain (Gemini API → Vertex AI → Claude).
+**Production-shaped FastAPI service template: async MongoDB, background workers, LLM fallback chain, multi-tenant auth.**
+
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Beanie_ODM-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://beanie-odm.dev/)
+[![Redis](https://img.shields.io/badge/Redis-async-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+[![NATS](https://img.shields.io/badge/NATS-JetStream-27AAE1?style=for-the-badge&logo=natsdotio&logoColor=white)](https://nats.io/)
+[![Taskiq](https://img.shields.io/badge/Taskiq-workers-5C2D91?style=for-the-badge)](https://taskiq-python.github.io/)
+[![Docker](https://img.shields.io/badge/Docker-compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docs.docker.com/compose/)
+[![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-OTLP-000000?style=for-the-badge&logo=opentelemetry&logoColor=white)](https://opentelemetry.io/)
+[![AWS S3](https://img.shields.io/badge/AWS-S3-FF9900?style=for-the-badge&logo=amazons3&logoColor=white)](https://aws.amazon.com/s3/)
+[![Gemini](https://img.shields.io/badge/Gemini-API_%2B_Vertex-4285F4?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev/)
+[![Claude](https://img.shields.io/badge/Claude-Anthropic-D97757?style=for-the-badge&logo=anthropic&logoColor=white)](https://www.anthropic.com/)
+
+[![Tests](https://img.shields.io/badge/tests-25_passing-brightgreen?style=flat-square)](tests/)
+[![Ruff](https://img.shields.io/badge/lint-ruff-261230?style=flat-square&logo=ruff&logoColor=D7FF64)](https://docs.astral.sh/ruff/)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-FAB040?style=flat-square&logo=pre-commit&logoColor=black)](.pre-commit-config.yaml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+
+</div>
+
+---
+
+## Tech stack
+
+| Layer | Choice | Why |
+|---|---|---|
+| **API** | FastAPI + Uvicorn | async, typed, OpenAPI for free |
+| **Database** | MongoDB via Beanie ODM (Motor) | pydantic documents, auto-discovered models |
+| **Cache / jobs state** | Redis (`redis.asyncio`) | batch progress, counters, locks |
+| **Task queue** | Taskiq on NATS JetStream | one broker per queue, scale workers independently |
+| **DI** | dependency-injector | services declared once, trivially mockable |
+| **Auth** | `x-user-data` header from gateway | multi-tenant `org_id` scoping, role gates |
+| **Storage** | AWS S3 (boto3) | presigned PUT/GET, browser-direct uploads |
+| **LLM** | Gemini API → Vertex AI → Claude | structured output, automatic fallback |
+| **Observability** | OpenTelemetry (OTLP/HTTP) + JSON logs | traces, metrics, logs with trace ids |
+| **Email** | SMTP (`smtplib`) | HTML + attachments |
+| **Docs / files** | PyPDF2, python-docx, python-pptx, pandas | text extraction, CSV/XLSX ingestion |
+| **Quality** | pytest + mongomock-motor, ruff, pre-commit | hermetic tests, one linter/formatter |
+
+## Layout
 
 ```
 main.py                     app factory, lifespan, middleware, router wiring
@@ -40,6 +77,29 @@ make test
 ```
 
 `pipenv` users: `pipenv install --dev` reads the `Pipfile` (no lock file is committed).
+
+### Pre-commit (first-time setup)
+
+Hooks run ruff (lint + format), mypy, bandit, detect-secrets and basic hygiene
+checks on every commit. Configure once per clone:
+
+```bash
+.venv/bin/pip install pre-commit        # or: uv pip install --python .venv/bin/python pre-commit
+.venv/bin/pre-commit install            # writes .git/hooks/pre-commit
+.venv/bin/pre-commit run --all-files    # first run downloads hook envs and checks everything
+```
+
+Useful afterwards:
+
+```bash
+.venv/bin/pre-commit autoupdate                        # bump hook versions in .pre-commit-config.yaml
+.venv/bin/detect-secrets scan > .secrets.baseline      # refresh baseline after intentional changes
+.venv/bin/detect-secrets audit .secrets.baseline       # mark findings as false positives
+git commit --no-verify                                 # skip hooks once (avoid)
+```
+
+If a hook fails on files you did not touch, run `pre-commit run --all-files`
+once and commit the fixes separately.
 
 ## Try it
 
